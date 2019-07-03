@@ -1,0 +1,20 @@
+service:
+  name: coins-counter
+
+plugins:
+  - '@hewmen/serverless-plugin-typescript'  
+  - serverless-plugin-optimize
+  - serverless-offline
+  # - serverless-plugin-warmup
+
+provider:
+  name: aws
+  runtime: nodejs10.15
+
+functions:
+  main:
+    handler: src/index.test
+    events:
+      - http:
+          method: GET
+          path: /test
