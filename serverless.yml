@@ -5,16 +5,75 @@ plugins:
   - '@hewmen/serverless-plugin-typescript'  
   - serverless-plugin-optimize
   - serverless-offline
+  - serverless-dynamodb-local
   # - serverless-plugin-warmup
 
 provider:
   name: aws
   runtime: nodejs10.15
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-west-2'}
 
 functions:
-  main:
-    handler: src/index.test
+  getInventory:
+    handler: src/api/index.getInventory
     events:
       - http:
-          method: GET
-          path: /test
+          path: /get-inventory
+          method: get
+          cors:
+            origin: '*'
+
+  resetInventory:
+    handler: src/api/index.resetInventory
+    events:
+      - http:
+          path: /reset-inventory
+          method: get
+          cors:
+            origin: '*'
+
+  calculateChange:
+    handler: src/api/index.getChangeFor
+    events:
+      - http:
+          path: /calculate-change
+          method: post
+          cors:
+            origin: '*'
+
+  calculateOptimalChange:
+    handler: src/api/index.getOptimalChangeFor
+    events:
+      - http:
+          path: /calculate-optimal-change
+          method: post
+          cors:
+            origin: '*'
+
+resources:
+  Resources:
+    CoinsInventoryStorage:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: type
+            AttributeType: S
+          -
+            AttributeName: count
+            AttributeType: N
+
+        KeySchema:
+          -
+            AttributeName: type
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: 'test_table' #${self:provider.environment.DYNAMODB_TABLE}
+
+custom:
+  serverless-offline:
+    host: 0.0.0.0
