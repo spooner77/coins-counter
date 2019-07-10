@@ -2,17 +2,37 @@ service:
   name: coins-counter
 
 plugins:
-  - '@hewmen/serverless-plugin-typescript'  
-  - serverless-plugin-optimize
-  - serverless-offline
   - serverless-dynamodb-local
-  # - serverless-plugin-warmup
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    host: 0.0.0.0
+  dynamodb:
+    start:
+      port: 8007
+      dbPath: ${env:PWD}/dynamo-db
+      migrate: true
+    stages:
+      - dev
 
 provider:
   name: aws
   runtime: nodejs10.15
   stage: ${opt:stage, 'dev'}
-  region: ${opt:region, 'us-west-2'}
+  region: ${opt:region, 'localhost'}
+  environment:
+    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
 
 functions:
   getInventory:
@@ -61,9 +81,6 @@ resources:
           -
             AttributeName: type
             AttributeType: S
-          -
-            AttributeName: count
-            AttributeType: N
 
         KeySchema:
           -
@@ -72,8 +89,5 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-        TableName: 'test_table' #${self:provider.environment.DYNAMODB_TABLE}
+        TableName: ${self:provider.environment.DYNAMODB_TABLE}
 
-custom:
-  serverless-offline:
-    host: 0.0.0.0

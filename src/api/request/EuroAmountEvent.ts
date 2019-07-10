@@ -2,15 +2,15 @@ import { InvalidPayloadException } from '../../errors';
 import { IRequestEvent } from './definitions';
 
 export class EuroAmountEvent implements IRequestEvent<number> {
-  private event: any;
+  private body: any;
   private data: number;
 
-  constructor(event: any) {
-    this.event = event;
+  constructor(body: any) {
+    this.body = body;
   }
 
   public getData(): number {
-    if (!this.data) {
+    if (this.data === undefined) {
       this.parse();
     }
 
@@ -18,17 +18,17 @@ export class EuroAmountEvent implements IRequestEvent<number> {
   }
 
   public validate(): void {
-    if (!this.data) {
+    if (this.data === undefined) {
       this.parse();
     }
 
-    if (Object.is(this.data, NaN)) {
+    if (Number.isNaN(this.data)) {
       throw new InvalidPayloadException(`Field [amount] must be a number ["${this.data}"]`);
     }
   }
 
   private parse(): void {
-    const data = JSON.parse(this.event);
-    this.data = Number(data.amount);
+    console.log('body', this.body)
+    this.data = parseFloat(this.body);
   }
 }

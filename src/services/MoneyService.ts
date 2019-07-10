@@ -11,10 +11,12 @@ export class MoneyService {
   }
 
   public getChangeFor(euro: number): CoinInventory[] {
+    console.log('getChangeFor', euro)
     return this.coinsCounter.getChangeFor(euro);
   }
 
   public getOptimalChangeFor(euro: number): CoinInventory[] {
+    console.log('getChangeFor', euro)
     return this.coinsCounter.getChangeFor(euro, false);
   }
 

@@ -8,19 +8,22 @@ import { InventoryManager } from '../utils/InventoryManager';
 import { EuroAmountEvent } from './request';
 import { Response } from './responce';
 
-const storage = new MemoryStorage();
+const storage = new DynamoDbStorage();
 const service = new MoneyService(storage);
-service.initialize();
 
-export const getOptimalChangeFor = async (event: any, context: Context): Promise<APIGatewayProxyResult> => {
+
+export const getOptimalChangeFor = async ({body}: any, context: Context): Promise<APIGatewayProxyResult> => {
   try {
-    const euroAmount = new EuroAmountEvent(event);
+    await service.initialize();
+
+    const euroAmount = new EuroAmountEvent(body);
     euroAmount.validate();
 
     const result = service.getOptimalChangeFor(euroAmount.getData());
 
-    return new Response(OK, new InventoryManager(result).toString());
+    return new Response(OK, result);
   } catch (err) {
+    console.log(err);
     if (err instanceof InsufficientFundsException) {
       return new Response(BAD_REQUEST, {code: err.name, message: err.message});
     }
@@ -30,17 +33,19 @@ export const getOptimalChangeFor = async (event: any, context: Context): Promise
 };
 
 export const getChangeFor = async (
-  event: any,
+  {body}: any,
   context: Context,
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const euroAmount = new EuroAmountEvent(event);
+    await service.initialize();
+
+    const euroAmount = new EuroAmountEvent(body);
     euroAmount.validate();
 
     const result = service.getChangeFor(euroAmount.getData());
     service.updateInventory();
 
-    return new Response(OK, new InventoryManager(result).toString());
+    return new Response(OK, result);
   } catch (err) {
     if (err instanceof InsufficientFundsException) {
       return new Response(BAD_REQUEST, {code: err.name, message: err.message});
@@ -64,6 +69,7 @@ export const resetInventory = async () => {
     new CoinInventory(CoinType.TenCents, 99),
     new CoinInventory(CoinType.FiftyCents, 200),
     new CoinInventory(CoinType.TwoCents, 11),
+    new CoinInventory(CoinType.OneCent, 11),
   ]);
-  return new Response(OK, { message: 'Inventory updated' });
+  return new Response(OK, {message: 'Inventory updated'});
 };

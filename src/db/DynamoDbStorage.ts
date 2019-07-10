@@ -7,20 +7,21 @@ export class DynamoDbStorage implements IInventoryStorage {
   constructor() {
     let options = {};
 
-// connect to local DB if running offline
-//     if (process.env.IS_OFFLINE) {
+    // connect to local DB if running offline
+    if (process.env.IS_OFFLINE) {
+      console.log('offline')
       options = {
         region: 'localhost',
-        endpoint: 'http://localhost:8000',
+        endpoint: 'http://localhost:8007',
       };
-    // }
+    }
 
     this.client = new DynamoDB.DocumentClient(options);
   }
 
   public async getInventory(): Promise<CoinInventory[]> {
     const params = {
-      TableName: 'test_table', // process.env.DYNAMODB_TABLE,
+      TableName: process.env.DYNAMODB_TABLE,
     };
 
     return new Promise( (resolve, reject) => {
@@ -47,7 +48,7 @@ export class DynamoDbStorage implements IInventoryStorage {
   public async updateInventory(dtos: CoinInventory[]): Promise<any> {
     const result = dtos.map((dto: CoinInventory) => {
       const params = {
-        TableName: 'test_table', // process.env.DYNAMODB_TABLE,
+        TableName: process.env.DYNAMODB_TABLE,
         Item: {
           type: dto.type,
           count: dto.count,

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" >
+    <link rel="stylesheet" href="style.css" />
+    <title>Coins counter</title>
+</head>
+<body>
+    <div class="container">
+        <input type="text" class="form-control" id="amount" placeholder="Euro Amount">
+            <div class="input-group-append">
+                <button type="btn" class="btn btn-outline-success mb-2" id="get-optimal-change">Get Optimal Change</button>
+                <button type="btn" class="btn btn-outline-success mb-2" id="get-change">Get Change</button>
+                <button type="btn" class="btn btn-outline-success mb-2" id="get-inventory">Get Inventory</button>
+                <button type="btn" class="btn btn-outline-success mb-2" id="reset-inventory">Reset Inventory</button>
+            </div>
+        <textarea rows="10" class="form-control" id="response">
+        </textarea>
+    </div>
+    <script>
+        window.onload = function () {
+            const API_HOST = 'http://0.0.0.0:3000';
+            const GetChange = document.getElementById('get-change');
+            const GetOptimalChange = document.getElementById('get-optimal-change');
+            const Inventory = document.getElementById('get-inventory');
+            const Reset = document.getElementById('reset-inventory');
+            const Input = document.getElementById('amount');
+            const Textatea = document.getElementById('response');
+
+            const displayResult = (data) =>  {
+                console.log(data);
+                Textatea.value = JSON.stringify(data, null, 1);
+            }
+
+            const request = (url, method, data) => {
+                const params = {
+                    method: method,
+                    cache: 'no-cache',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: parseFloat(data)
+                };
+
+                if (method === 'GET' || method === 'HEAD') {
+                    delete params.body;
+                }
+
+                return fetch(url, params).then(result => result.json()).then(result => displayResult(result), error => displayResult(error))
+            }
+
+            const cleanValues = () => {
+                Input.value = '';
+                Textatea.value = '';
+            }
+
+            Reset.addEventListener("click", () => {
+                request(`${API_HOST}/reset-inventory`, 'GET');
+            });
+
+            Inventory.addEventListener("click", () => {
+                request(`${API_HOST}/get-inventory`, 'GET');
+            });
+
+            GetChange.addEventListener("click", () => {
+                const amount = parseFloat(Input.value)
+                request(`${API_HOST}/calculate-change`, 'POST', amount);
+            });
+
+            GetOptimalChange.addEventListener("click", () => {
+                const amount = parseFloat(Input.value)
+                request(`${API_HOST}/calculate-optimal-change`, 'POST', amount);
+            });
+        }
+    </script>
+</body>
+</html>
